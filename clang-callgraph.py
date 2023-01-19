@@ -10,7 +10,6 @@ Dumps a callgraph of a function in a codebase
 usage: callgraph.py file.cpp|compile_commands.json [-x exclude-list] [extra clang args...]
 The easiest way to generate the file compile_commands.json for any make based
 compilation chain is to use Bear and recompile with `bear make`.
-
 When running the python script, after parsing all the codebase, you are
 prompted to type in the function's name for which you wan to obtain the
 callgraph
@@ -161,12 +160,33 @@ def main():
     cfg = read_args(sys.argv)
 
     print('reading source files...')
+               
+            
+
+        
     for cmd in read_compile_commands(cfg['db']):
         index = Index.create()
+        ccmd = []
+        print(cmd['arguments'])
+        for i in range(len(cmd['arguments'])):
+            x = cmd['arguments'][i]
+            if x.startswith('-I') and len(x) == 2:
+                x = x + cmd['arguments'][i+1]
+            ccmd.append(x)
         c = [
-            x for x in cmd['command'].split()
+            x for x in ccmd
             if x.startswith('-I') or x.startswith('-std=') or x.startswith('-D')
-        ] + cfg['clang_args']
+        ] 
+        print(c)
+        cd = cmd['directory']
+        new_c = []
+        for z in c:
+            if z.startswith('-I') and not z.startswith('-I/') :
+                z = '-I' + cd +"/" +  z[2:]
+                print(z)
+            new_c.append(z)    
+        c = new_c
+        print(c)        
         tu = index.parse(cmd['file'], c)
         print(cmd['file'])
         if not tu:
@@ -196,3 +216,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
