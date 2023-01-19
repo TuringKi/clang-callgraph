@@ -105,16 +105,26 @@ def print_calls(fun_name, so_far, depth=0):
     if depth >= 15:
         print('...<too deep>...')
         return
+    
     if fun_name in CALLGRAPH:
+        print("<li>")
+        print("<ol>")
+        print("<details><summary>%s</summary>"%fun_name)
         for f in CALLGRAPH[fun_name]:
-            print('  ' * (depth + 1) + pretty_print(f))
+            
+            #print('  ' * (depth + 1) + pretty_print(f))
             if f in so_far:
                 continue
             so_far.append(f)
+            
             if fully_qualified_pretty(f) in CALLGRAPH:
                 print_calls(fully_qualified_pretty(f), so_far, depth + 1)
             else:
                 print_calls(fully_qualified(f), so_far, depth + 1)
+            
+        print("</details></li>")
+        print("</ol>")
+        print("</li>")
 
 
 def read_compile_commands(filename):
@@ -157,7 +167,7 @@ def main():
               '[extra clang args...]')
         return
 
-    cfg = read_args(sys.argv)
+    cfg = read_args(sys.argv[:2])
 
     print('reading source files...')
                
@@ -199,19 +209,19 @@ def main():
                 return
         show_info(tu.cursor, cfg['excluded_paths'], cfg['excluded_prefixes'])
 
-    while True:
-        fun = input('> ')
-        if not fun:
-            break
-        if fun in CALLGRAPH:
-            print(fun)
-            print_calls(fun, list())
-        else:
-            print('matching:')
-            for f, ff in FULLNAMES.items():
-                if f.startswith(fun):
-                    for fff in ff:
-                        print(fff)
+    
+    fun = sys.argv[2]
+    if not fun:
+        return
+    if fun in CALLGRAPH:
+        print(fun)
+        print_calls(fun, list())
+    else:
+        print('matching:')
+        for f, ff in FULLNAMES.items():
+            if f.startswith(fun):
+                for fff in ff:
+                    print(fff)
 
 
 if __name__ == '__main__':
